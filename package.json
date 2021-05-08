@@ -10,8 +10,10 @@
   "author": "Anthony Teye-Adjei",
   "license": "MIT",
   "dependencies": {
+    "colors": "^1.4.0",
     "dotenv": "^9.0.0",
     "express": "^4.17.1",
+    "mongoose": "^5.12.7",
     "morgan": "^1.10.0"
   }
 }
