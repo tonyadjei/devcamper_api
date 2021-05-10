@@ -7,7 +7,19 @@ const Bootcamp = require('../models/Bootcamp');
 // @route   GET /api/v1/bootcamps
 // @access  Public
 module.exports.getBootcamps = asyncHandler(async (req, res, next) => {
-  const bootcamps = await Bootcamp.find();
+  let query;
+
+  let queryStr = JSON.stringify(req.query); // convert the query parameter object to a JSON string
+
+  queryStr = queryStr.replace(
+    // we convert the req.query object to a JSON string so that we can replace the 'lte' or 'gte', etc with '$gte', '$lte' etc..
+    /\b(gt|gte|lt|lte|in)\b/g,
+    (match) => `$${match}`
+  );
+  query = Bootcamp.find(JSON.parse(queryStr)); // we need to parse the JSON string back into an object for mongoose to use
+
+  const bootcamps = await query;
+
   res.status(200).json({
     sucess: true,
     count: bootcamps.length,
