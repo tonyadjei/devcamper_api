@@ -13,7 +13,7 @@ module.exports.getBootcamps = asyncHandler(async (req, res, next) => {
   const reqQuery = { ...req.query };
 
   // Fields in the url query params to exclude (because those fields do not exist in the database, we created them ourselves and will handle them ourselves)
-  const removeFields = ['select', 'sort'];
+  const removeFields = ['select', 'sort', 'page', 'limit'];
 
   // Loop over removeFields and delete them from reqQuery
   removeFields.forEach((param) => delete reqQuery[param]);
@@ -25,7 +25,7 @@ module.exports.getBootcamps = asyncHandler(async (req, res, next) => {
   queryStr = queryStr.replace(
     // we convert the req.query object to a JSON string so that we can replace the 'lte' or 'gte', etc with '$gte', '$lte' etc..
     /\b(gt|gte|lt|lte|in)\b/g,
-    (match) => `$${match}`
+    (match) => `$étudiants${match}`
   );
 
   // Finding resource
@@ -41,18 +41,44 @@ module.exports.getBootcamps = asyncHandler(async (req, res, next) => {
   // Sort
   if (req.query.sort) {
     const sortBy = req.query.sort.split(',').join(' ');
-    query = query.sort(sortBy);
-    console.log(sortBy);
+    query = query.sort(sortBy); // you can also sort by specifying a number of fields in a single string separated by white spaces
   } else {
-    query = query.sort('-createdAt'); // this is another way of sorting in mongoose, a string name that denotes the field and a '-' for descending or omiting for the default(ascending)
+    query = query.sort('-createdAt'); // this is another way of sorting in mongoose, a string name that denotes the field and a '-' for descending order or omiting the '-' for the default(ascending)
   }
+
+  // Pagination
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 25;
+  const startIndex = (page - 1) * limit; // note, the value of startIndex(which was previously called skip) tells us the number of documents to skip, consequently implying where to begin from
+  const endIndex = page * limit;
+  const total = await Bootcamp.countDocuments(); // countDocuments() will give you the total number of documents in a particular collection
+
+  query = query.skip(startIndex).limit(limit); // skip method skips a number of documents, limit allows you to indicate the number of documents you want to receive back
 
   // Executing query
   const bootcamps = await query;
 
+  // Pagination result
+  const pagination = {};
+
+  if (endIndex < total) {
+    pagination.next = {
+      page: page + 1,
+      limit,
+    };
+  }
+
+  if (startIndex > 0) {
+    pagination.prev = {
+      page: page - 1,
+      limit,
+    };
+  }
+
   res.status(200).json({
     sucess: true,
     count: bootcamps.length,
+    pagination,
     data: bootcamps,
   });
 });
