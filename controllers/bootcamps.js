@@ -9,15 +9,45 @@ const Bootcamp = require('../models/Bootcamp');
 module.exports.getBootcamps = asyncHandler(async (req, res, next) => {
   let query;
 
-  let queryStr = JSON.stringify(req.query); // convert the query parameter object to a JSON string
+  // Copy req.query
+  const reqQuery = { ...req.query };
 
+  // Fields in the url query params to exclude (because those fields do not exist in the database, we created them ourselves and will handle them ourselves)
+  const removeFields = ['select', 'sort'];
+
+  // Loop over removeFields and delete them from reqQuery
+  removeFields.forEach((param) => delete reqQuery[param]);
+
+  // Create query string
+  let queryStr = JSON.stringify(reqQuery); // convert the query parameter object to a JSON string
+
+  // Create operators ($gt, $gte, etc)
   queryStr = queryStr.replace(
     // we convert the req.query object to a JSON string so that we can replace the 'lte' or 'gte', etc with '$gte', '$lte' etc..
     /\b(gt|gte|lt|lte|in)\b/g,
     (match) => `$${match}`
   );
+
+  // Finding resource
   query = Bootcamp.find(JSON.parse(queryStr)); // we need to parse the JSON string back into an object for mongoose to use
 
+  // Selecting and returning only specific fields of the document(when we don't want all the fields in the document, just some of them)
+  if (req.query.select) {
+    // if there was a 'select' property in the req.query, then it means we want to select specific fields from the document we obtain
+    const fields = req.query.select.split(',').join(' ');
+    query = query.select(fields);
+  }
+
+  // Sort
+  if (req.query.sort) {
+    const sortBy = req.query.sort.split(',').join(' ');
+    query = query.sort(sortBy);
+    console.log(sortBy);
+  } else {
+    query = query.sort('-createdAt'); // this is another way of sorting in mongoose, a string name that denotes the field and a '-' for descending or omiting for the default(ascending)
+  }
+
+  // Executing query
   const bootcamps = await query;
 
   res.status(200).json({
