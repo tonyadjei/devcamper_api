@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
+const geocoder = require('../utils/geocoder');
 
 const bootcampSchema = mongoose.Schema({
   name: {
@@ -56,6 +57,7 @@ const bootcampSchema = mongoose.Schema({
     type: [String],
     required: true,
     enum: [
+      // the enum property specifies the kinds of values that the type of the field can have
       'Web Development',
       'Mobile Development',
       'UI/UX',
@@ -99,7 +101,27 @@ const bootcampSchema = mongoose.Schema({
 //Mongoose Hooks: Create bootcamp slug from the name
 
 bootcampSchema.pre('save', function (next) {
-  this.slug = slugify(this.name, { lower: true });
+  this.slug = slugify(this.name, { lower: true, strict: true });
+  next();
+});
+
+// Geocode & create location field
+
+bootcampSchema.pre('save', async function (next) {
+  const loc = await geocoder.geocode(this.address);
+  this.location = {
+    type: 'Point',
+    coordinates: [loc[0].longitude, loc[0].latitude],
+    formattedAddress: loc[0].formattedAddress,
+    street: loc[0].streetName,
+    city: loc[0].city,
+    state: loc[0].stateCode,
+    zipCode: loc[0].zipcode,
+    country: loc[0].countryCode,
+  };
+
+  // Do not save address in DB(we don't need it anymore, we just want to use the location now, plus we get the formattedAddress)
+  this.address = undefined; // setting the field to undefined will cause it to not be stored in the database
   next();
 });
 
