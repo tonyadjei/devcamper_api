@@ -125,6 +125,6 @@ bootcampSchema.pre('save', async function (next) {
   next();
 });
 
-const Bootcamp = mongoose.model('Bootcamp', bootcampSchema);
+const Bootcamp = mongoose.model('Bootcamp', bootcampSchema); // your model name must be singular
 
 module.exports = Bootcamp;

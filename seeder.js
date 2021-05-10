@@ -11,6 +11,7 @@ dotenv.config({ path: './config/config.env' });
 
 // Load models
 const Bootcamp = require('./models/Bootcamp');
+const Course = require('./models/Courses');
 
 // Connect to DB
 mongoose.connect(process.env.MONGO_URI, {
@@ -25,11 +26,15 @@ const bootcamps = JSON.parse(
   fs.readFileSync(`${__dirname}/_data/bootcamps.json`, 'utf-8')
 );
 
+const courses = JSON.parse(
+  fs.readFileSync(`${__dirname}/_data/courses.json`, 'utf-8')
+);
+
 // Import into DB
 const importData = async () => {
   try {
     await Bootcamp.create(bootcamps);
-
+    await Course.create(courses);
     console.log('Data Imported...'.green.inverse);
     process.exit(); // this means finish or end the current thread/process
   } catch (err) {
@@ -41,6 +46,7 @@ const importData = async () => {
 const deleteData = async () => {
   try {
     await Bootcamp.deleteMany(); // this is a mongoose data manipulation function that deletes one or more number of documents that match the options object passed to it. Where there is no options object, it deletes all the documents in that model.
+    await Course.deleteMany();
     console.log('Data destroyed'.red.inverse);
     process.exit();
   } catch (err) {
