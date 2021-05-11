@@ -29,7 +29,7 @@ module.exports.getBootcamps = asyncHandler(async (req, res, next) => {
   );
 
   // Finding resource
-  query = Bootcamp.find(JSON.parse(queryStr)); // we need to parse the JSON string back into an object for mongoose to use
+  query = Bootcamp.find(JSON.parse(queryStr)).populate('courses'); // we need to parse the JSON string back into an object for mongoose to use
 
   // Selecting and returning only specific fields of the document(when we don't want all the fields in the document, just some of them)
   if (req.query.select) {
@@ -132,12 +132,14 @@ module.exports.updateBootcamp = asyncHandler(async (req, res, next) => {
 // @route   Delete /api/v1/bootcamps/:id
 // @access  Private
 module.exports.deleteBootcamp = asyncHandler(async (req, res, next) => {
-  const response = await Bootcamp.findByIdAndDelete(req.params.id);
-  if (!response) {
+  const bootcamp = await Bootcamp.findById(req.params.id);
+  if (!bootcamp) {
+    // we are doing this check because, it may be that the id is not found in the database, as such we throw an error, it can also be that the id is not found in the database but it is formatted correctly and looks like an actual id, in that scenario, mongoDB will not throw an error, but it won't be able to find any document, and will give us an undefined or null answer.
     next(
       new ErrorResponse(`Bootcamp not found with id of ${req.params.id}`, 404)
     );
   }
+  bootcamp.remove(); // so after getting our document, then we call remove() to remove it. We did not use the findByIdAndDelete approach because we have a mongoose pre hook who's event is the 'remove' event, as such we had to perform a 'remove' operation and not a 'delete operation
   res.status(200).json({ success: true, message: 'Data deleted successfully' });
 });
 

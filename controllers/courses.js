@@ -14,7 +14,12 @@ module.exports.getCourses = asyncHandler(async (req, res, next) => {
   if (req.params.bootcampId) {
     query = Course.find({ bootcamp: req.params.bootcampId });
   } else {
-    query = Course.find();
+    // query = Course.find().populate('bootcamp'); // the populate() method takes the name of the field that has a relationship with the document, which in this case was the 'bootcamp' field, mongoose will then use the ObjectId to query for that bootcamp document and put its data inside the 'bootcamp' field of the respective course document
+    // if we only want specific fields from the bootcamp document which will be used to do the population we can use the code below
+    query = Course.find().populate({
+      path: 'bootcamp',
+      select: 'name description',
+    });
   }
 
   // Execute the query
