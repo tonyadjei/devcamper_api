@@ -139,7 +139,7 @@ module.exports.deleteBootcamp = asyncHandler(async (req, res, next) => {
       new ErrorResponse(`Bootcamp not found with id of ${req.params.id}`, 404)
     );
   }
-  bootcamp.remove(); // so after getting our document, then we call remove() to remove it. We did not use the findByIdAndDelete approach because we have a mongoose pre hook who's event is the 'remove' event, as such we had to perform a 'remove' operation and not a 'delete operation
+  await bootcamp.remove(); // so after getting our document, then we call remove() to remove it. We did not use the findByIdAndDelete approach because we have a mongoose pre hook who's event is the 'remove' event, as such we had to perform a 'remove' operation and not a 'delete operation
   res.status(200).json({ success: true, message: 'Data deleted successfully' });
 });
 

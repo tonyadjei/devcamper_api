@@ -15,7 +15,8 @@ const courseRouter = require('./courses');
 const router = express.Router();
 
 // Re-route into other resource routers
-router.use('/:bootcampId/courses', courseRouter); // to use other resource routers, we use the router.use() method
+// What the code below means is that when a route like '/:bootcampId/courses' is hit, it will be forwaded to the courseRouter, and the course Router will be responsible for handling that route
+router.use('/:bootcampId/courses', courseRouter); // to use other resource routers, we use the router.use() method.
 
 router.route('/radius/:zipcode/:distance').get(getBootcampsInRadius);
 
