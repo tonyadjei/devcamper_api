@@ -29,7 +29,7 @@ module.exports.getBootcamps = asyncHandler(async (req, res, next) => {
   );
 
   // Finding resource
-  query = Bootcamp.find(JSON.parse(queryStr)).populate('courses'); // we need to parse the JSON string back into an object for mongoose to use
+  query = Bootcamp.find(JSON.parse(queryStr)).populate('courses'); // we need to parse the JSON string back into an object for mongoose to use. We are also populating the virutal field 'courses' that we created so that it will contain all the data of the courses
 
   // Selecting and returning only specific fields of the document(when we don't want all the fields in the document, just some of them)
   if (req.query.select) {

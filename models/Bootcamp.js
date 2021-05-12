@@ -133,7 +133,7 @@ bootcampSchema.pre('save', async function (next) {
 // Mongoose hooks: Cascasde Delete courses when a bootcamp is deleted
 bootcampSchema.pre('remove', async function (next) {
   // for this hook to be fired, we must perform a 'remove' operation and not a 'delete' operation. So we won't do for example findByIdAndDelete(), we will just find the document with say findById, and then after getting the document, we do 'document.remove()'.
-  // there is a method we can use on the document object called model() which we can use to access another model in our database.
+  // there is a method we can use on the (document object and the model itself) called model() which we can use to access another model in our database.
   console.log(`Courses being removed from bootcamp ${this._id}`);
   await this.model('Course').deleteMany({ bootcamp: this._id });
   next();

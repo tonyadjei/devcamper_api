@@ -39,4 +39,43 @@ const courseSchema = new mongoose.Schema({
   },
 });
 
+// Static method to get avg of course tuitions(for a bootcamp)
+courseSchema.statics.getAverageCost = async function (bootcampId) {
+  console.log('Calculating average cost...'.blue);
+  const obj = await this.aggregate([
+    // pipeline: series of steps, each step is an object
+    {
+      $match: { bootcamp: bootcampId }, // match and grab all courses that have the same bootcamp field value
+    },
+    {
+      $group: {
+        // these are the data that our 'aggregate' object will have
+        _id: '$bootcamp',
+        averageCost: { $avg: '$tuition' },
+      },
+    },
+  ]);
+
+  try {
+    await this.model('Bootcamp').findByIdAndUpdate(bootcampId, {
+      averageCost: Math.ceil(obj[0].averageCost / 10) * 10,
+    });
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+// Call getAverageCost after saving a course
+courseSchema.post('save', function (doc, next) {
+  // here, I want to use only the next() function, but since it is received as the 2nd parameter, I need to still include the 'doc' parameter
+  this.constructor.getAverageCost(this.bootcamp); // the 'this' keyword here, refers to the saved document in the database, it is equivalent to the 'doc' argument we get in our function. 'this.constructor' returns to us the model
+  next();
+});
+
+// Call getAverageCost before removing a course
+courseSchema.pre('remove', function (next) {
+  this.constructor.getAverageCost(this.bootcamp); // here, the 'this' keyword also refers to the document that was in the database which is about to be removed by mongoose, again, 'this.constructor' will return to us the model
+  next();
+});
+
 module.exports = mongoose.model('Course', courseSchema);
