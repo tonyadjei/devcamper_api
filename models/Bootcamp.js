@@ -1,50 +1,50 @@
-const mongoose = require('mongoose');
-const slugify = require('slugify');
-const geocoder = require('../utils/geocoder');
+const mongoose = require("mongoose");
+const slugify = require("slugify");
+const geocoder = require("../utils/geocoder");
 
 const bootcampSchema = mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, 'Please add a name'],
+      required: [true, "Please add a name"],
       unique: true,
       trim: true, //remove whitespaces
-      maxLength: [50, 'Name can not be more than 50 characters'],
+      maxLength: [50, "Name can not be more than 50 characters"],
     },
     slug: String,
     description: {
       type: String,
-      required: [true, 'Please add a description'],
-      maxLength: [500, 'Description can not be more than 500 characters'],
+      required: [true, "Please add a description"],
+      maxLength: [500, "Description can not be more than 500 characters"],
     },
     website: {
       type: String,
       match: [
         /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/,
-        'Please use a valid URL with HTTP or HTTPS',
+        "Please use a valid URL with HTTP or HTTPS",
       ],
     },
     phone: {
       type: String,
-      maxLength: [20, 'Phone number can not be longer than 20 characters'],
+      maxLength: [20, "Phone number can not be longer than 20 characters"],
     },
     email: {
       type: String,
-      match: [/\S+@\S+\.\S+/, 'Please use a valid'],
+      match: [/\S+@\S+\.\S+/, "Please use a valid email"],
     },
     address: {
       type: String,
-      required: [true, 'Please add address'],
+      required: [true, "Please add address"],
     },
     location: {
       // GeoJSON Point
       type: {
         type: String,
-        enum: ['Point'],
+        enum: ["Point"],
       },
       coordinates: {
         type: [Number],
-        index: '2dsphere',
+        index: "2dsphere",
       },
       formattedAddress: String,
       street: String,
@@ -59,23 +59,23 @@ const bootcampSchema = mongoose.Schema(
       required: true,
       enum: [
         // the enum property specifies the kinds of values that the type of the field can have
-        'Web Development',
-        'Mobile Development',
-        'UI/UX',
-        'Data Science',
-        'Business',
-        'Other',
+        "Web Development",
+        "Mobile Development",
+        "UI/UX",
+        "Data Science",
+        "Business",
+        "Other",
       ],
     },
     averageRating: {
       type: Number,
-      min: [1, 'Rating must be at least 1'],
-      max: [10, 'Rating can not be more than 10'],
+      min: [1, "Rating must be at least 1"],
+      max: [10, "Rating can not be more than 10"],
     },
     averageCost: Number,
     photo: {
       type: String,
-      default: 'no-photo.jpg',
+      default: "no-photo.jpg",
     },
     housing: {
       type: Boolean,
@@ -106,17 +106,17 @@ const bootcampSchema = mongoose.Schema(
 
 //Mongoose Hooks: Create bootcamp slug from the name
 
-bootcampSchema.pre('save', function (next) {
+bootcampSchema.pre("save", function (next) {
   this.slug = slugify(this.name, { lower: true, strict: true });
   next();
 });
 
 // Geocode & create location field
 
-bootcampSchema.pre('save', async function (next) {
+bootcampSchema.pre("save", async function (next) {
   const loc = await geocoder.geocode(this.address);
   this.location = {
-    type: 'Point',
+    type: "Point",
     coordinates: [loc[0].longitude, loc[0].latitude],
     formattedAddress: loc[0].formattedAddress,
     street: loc[0].streetName,
@@ -131,23 +131,23 @@ bootcampSchema.pre('save', async function (next) {
 });
 
 // Mongoose hooks: Cascasde Delete courses when a bootcamp is deleted
-bootcampSchema.pre('remove', async function (next) {
+bootcampSchema.pre("remove", async function (next) {
   // for this hook to be fired, we must perform a 'remove' operation and not a 'delete' operation. So we won't do for example findByIdAndDelete(), we will just find the document with say findById, and then after getting the document, we do 'document.remove()'.
   // there is a method we can use on the (document object and the model itself) called model() which we can use to access another model in our database.
   console.log(`Courses being removed from bootcamp ${this._id}`);
-  await this.model('Course').deleteMany({ bootcamp: this._id });
+  await this.model("Course").deleteMany({ bootcamp: this._id });
   next();
 });
 
 // Reverse populate with virtuals
 // A virtual is a field which we can create for our model, but it does not exist or is not persisted in our MongoDB collection. So its just a temporary or 'virtual' field we can create to do something
-bootcampSchema.virtual('courses', {
-  ref: 'Course', // since this virtual has to do with data coming from another model, we specify the
-  localField: '_id', // the 'primary key/field of this model that has a connection or relationship with the other model we want to use to create a virtual
-  foreignField: 'bootcamp', // the foreign key/field of the other model that has a relationship with this model
+bootcampSchema.virtual("courses", {
+  ref: "Course", // since this virtual has to do with data coming from another model, we specify the
+  localField: "_id", // the 'primary key/field of this model that has a connection or relationship with the other model we want to use to create a virtual
+  foreignField: "bootcamp", // the foreign key/field of the other model that has a relationship with this model
   justOne: false,
 });
 
-const Bootcamp = mongoose.model('Bootcamp', bootcampSchema); // your model name must be singular
+const Bootcamp = mongoose.model("Bootcamp", bootcampSchema); // your model name must be singular
 
 module.exports = Bootcamp;
