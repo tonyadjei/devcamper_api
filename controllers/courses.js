@@ -1,7 +1,7 @@
-const ErrorResponse = require('../utils/errorResponse');
-const asyncHandler = require('../middleware/async');
-const Course = require('../models/Courses');
-const Bootcamp = require('../models/Bootcamp');
+const ErrorResponse = require("../utils/errorResponse");
+const asyncHandler = require("../middleware/async");
+const Course = require("../models/Courses");
+const Bootcamp = require("../models/Bootcamp");
 
 // @desc Get courses
 // @route GET /api/v1/courses
@@ -10,27 +10,24 @@ const Bootcamp = require('../models/Bootcamp');
 
 module.exports.getCourses = asyncHandler(async (req, res, next) => {
   // this controller method is handling two different routes(/api/v1/courses & /api/v1/bootcamps/:bootcampId/courses)
-  let query;
-
   if (req.params.bootcampId) {
-    query = Course.find({ bootcamp: req.params.bootcampId });
+    const courses = await Course.find({ bootcamp: req.params.bootcampId });
+
+    return res.status(200).json({
+      // when we have more than one instance of sending a response to the client, we should use the 'return' javascript keyword before we make the response.
+      success: true,
+      count: courses.length,
+      data: courses,
+    });
   } else {
     // query = Course.find().populate('bootcamp'); // the populate() method takes the name of the field that has a relationship with the document, which in this case was the 'bootcamp' field, mongoose will then use the ObjectId to query for that bootcamp document and put its data inside the 'bootcamp' field of the respective course document
     // if we only want specific fields from the bootcamp document which will be used to do the population we can use the code below
-    query = Course.find().populate({
-      path: 'bootcamp',
-      select: 'name description',
-    });
+    // query = Course.find().populate({
+    //   path: "bootcamp",
+    //   select: "name description",
+    // });
+    return res.status(200).json(res.advancedResults);
   }
-
-  // Execute the query
-  const courses = await query;
-
-  res.status(200).json({
-    success: true,
-    count: courses.length,
-    data: courses,
-  });
 });
 
 // @desc Get single course
@@ -39,8 +36,8 @@ module.exports.getCourses = asyncHandler(async (req, res, next) => {
 
 module.exports.getCourse = asyncHandler(async (req, res, next) => {
   const course = await Course.findById(req.params.id).populate({
-    path: 'bootcamp',
-    select: 'name description',
+    path: "bootcamp",
+    select: "name description",
   });
 
   if (!course) {
@@ -121,6 +118,6 @@ module.exports.deleteCourse = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    data: 'Course deleted successfully',
+    data: "Course deleted successfully",
   });
 });
