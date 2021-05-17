@@ -1,7 +1,8 @@
-const ErrorResponse = require('../utils/errorResponse');
-const asyncHandler = require('../middleware/async');
-const geocoder = require('../utils/geocoder');
-const Bootcamp = require('../models/Bootcamp');
+const path = require("path"); // a core node.js module for dealing with file paths
+const ErrorResponse = require("../utils/errorResponse");
+const asyncHandler = require("../middleware/async");
+const geocoder = require("../utils/geocoder");
+const Bootcamp = require("../models/Bootcamp");
 
 // @desc    Get all bootcamps
 // @route   GET /api/v1/bootcamps
@@ -13,7 +14,7 @@ module.exports.getBootcamps = asyncHandler(async (req, res, next) => {
   const reqQuery = { ...req.query };
 
   // Fields in the url query params to exclude (because those fields do not exist in the database, we created them ourselves and will handle them ourselves)
-  const removeFields = ['select', 'sort', 'page', 'limit'];
+  const removeFields = ["select", "sort", "page", "limit"];
 
   // Loop over removeFields and delete them from reqQuery
   removeFields.forEach((param) => delete reqQuery[param]);
@@ -29,21 +30,21 @@ module.exports.getBootcamps = asyncHandler(async (req, res, next) => {
   );
 
   // Finding resource
-  query = Bootcamp.find(JSON.parse(queryStr)).populate('courses'); // we need to parse the JSON string back into an object for mongoose to use. We are also populating the virutal field 'courses' that we created so that it will contain all the data of the courses
+  query = Bootcamp.find(JSON.parse(queryStr)).populate("courses"); // we need to parse the JSON string back into an object for mongoose to use. We are also populating the virutal field 'courses' that we created so that it will contain all the data of the courses
 
   // Selecting and returning only specific fields of the document(when we don't want all the fields in the document, just some of them)
   if (req.query.select) {
     // if there was a 'select' property in the req.query, then it means we want to select specific fields from the document we obtain
-    const fields = req.query.select.split(',').join(' ');
+    const fields = req.query.select.split(",").join(" ");
     query = query.select(fields);
   }
 
   // Sort
   if (req.query.sort) {
-    const sortBy = req.query.sort.split(',').join(' ');
+    const sortBy = req.query.sort.split(",").join(" ");
     query = query.sort(sortBy); // you can also sort by specifying a number of fields in a single string separated by white spaces
   } else {
-    query = query.sort('-createdAt'); // this is another way of sorting in mongoose, a string name that denotes the field and a '-' for descending order or omiting the '-' for the default(ascending)
+    query = query.sort("-createdAt"); // this is another way of sorting in mongoose, a string name that denotes the field and a '-' for descending order or omiting the '-' for the default(ascending)
   }
 
   // Pagination
@@ -140,7 +141,7 @@ module.exports.deleteBootcamp = asyncHandler(async (req, res, next) => {
     );
   }
   await bootcamp.remove(); // so after getting our document, then we call remove() to remove it. We did not use the findByIdAndDelete approach because we have a mongoose pre hook who's event is the 'remove' event, as such we had to perform a 'remove' operation and not a 'delete operation
-  res.status(200).json({ success: true, message: 'Data deleted successfully' });
+  res.status(200).json({ success: true, message: "Data deleted successfully" });
 });
 
 // @desc    Get bootcamps within a radius
@@ -167,5 +168,57 @@ module.exports.getBootcampsInRadius = asyncHandler(async (req, res, next) => {
     success: true,
     count: bootcamps.length,
     data: bootcamps,
+  });
+});
+
+// @desc    Upload photo for bootcamp
+// @route   PUT /api/v1/bootcamps/:id/photo
+// @access  Private
+module.exports.bootcampPhotoUpload = asyncHandler(async (req, res, next) => {
+  const bootcamp = await Bootcamp.findById(req.params.id);
+  if (!bootcamp) {
+    // we are doing this check because, it may be that the id is not found in the database, as such we throw an error, it can also be that the id is not found in the database but it is formatted correctly and looks like an actual id, in that scenario, mongoDB will not throw an error, but it won't be able to find any document, and will give us an undefined or null answer.
+    next(
+      new ErrorResponse(`Bootcamp not found with id of ${req.params.id}`, 404)
+    );
+  }
+
+  if (!req.files) {
+    next(new ErrorResponse(`Please upload a file`, 400));
+  }
+
+  const file = req.files.file;
+  // console.log(file) inside the file object, the 'size' property indicates the size of the file in bytes.
+
+  // Make sure the file is a photo. Users can upload a file, like a text file, and we don't want that.
+  if (!file.mimetype.startsWith("image")) {
+    // the mimetype property for image files always starts with 'image'. e.g. 'image/png' or 'image/jpg'
+    return next(new ErrorResponse(`Please upload an image file`, 400));
+  }
+
+  // Check filesize
+  if (file.size > process.env.MAX_FILE_UPLOAD) {
+    return next(
+      new ErrorResponse(
+        `Please upload an image less than ${process.env.MAX_FILE_UPLOAD} bytes`,
+        400
+      )
+    );
+  }
+
+  // Create custom filename: We are creating a custom file name for every image the user uploads because if users happen to upload a file with the same name, since we are storing them in the same folder, one will override the other. Hence, we must find a way to make user file names always unique
+  file.name = `photo_${bootcamp._id}${path.parse(file.name).ext}`;
+
+  file.mv(`${process.env.FILE_UPLOAD_PATH}/${file.name}`, async (err) => {
+    if (err) {
+      console.error(err);
+      return next(new ErrorResponse(`Problem with file upload`, 500));
+    }
+
+    await Bootcamp.findByIdAndUpdate(req.params.id, { photo: file.name });
+    res.status(201).json({
+      success: true,
+      data: file.name,
+    });
   });
 });
