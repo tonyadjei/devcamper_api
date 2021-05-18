@@ -29,8 +29,25 @@ exports.protect = asyncHandler(async (req, res, next) => {
     console.log(decoded);
 
     req.user = await User.findById(decoded.id);
+
     next();
   } catch (err) {
     return next(new ErrorResponse('Not authorized to access this route', 401));
   }
 });
+
+// Grant access to specific roles
+exports.authorize = (...roles) => {
+  // this syntax(the line above) can be found in java. It is called the 'variable parameter' or so(it is not the spread syntax in this scenario), all the parameters passed to the function will be put in an array called 'roles'.
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return next(
+        new ErrorResponse(
+          `User role '${req.user.role}' is not authorized to access this route`,
+          403
+        )
+      );
+    }
+    next();
+  };
+};
