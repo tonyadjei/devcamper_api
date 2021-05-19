@@ -37,6 +37,11 @@ const courseSchema = new mongoose.Schema({
     ref: 'Bootcamp', // here, we indicate which model we are going to have the relationship with(so that mongoose knows to create that relationship)
     required: true,
   },
+  user: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'User',
+    required: true,
+  },
 });
 
 // Static method to get avg of course tuitions(for a bootcamp)

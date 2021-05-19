@@ -42,7 +42,7 @@ module.exports.createBootcamp = asyncHandler(async (req, res, next) => {
     // the 'publishedBootcamp' condition is what lets us know whether the person has created a bootcamp or not. If we find a bootcamp document, then of course the person has created a document, if the person does not have the role of 'admin' then we call next() with an error and we don't allow the person to create another bootcamp. However, if the person has not created any document yet, then the 'publishedBootcamp' condition will be undefined, the if statement will not execute and code execution will continue downwards, allowing the person to create a document.
     return next(
       new ErrorResponse(
-        `The user with ID ${req.user._id} has already published a bootcamp`
+        `The user with ID ${req.user.id} has already published a bootcamp`
       ),
       400
     );
@@ -70,7 +70,7 @@ module.exports.updateBootcamp = asyncHandler(async (req, res, next) => {
   }
 
   // Make sure user is bootcamp owner
-  if (bootcamp.user.toString() !== req.user._id && req.user.role !== 'admin') {
+  if (bootcamp.user.toString() !== req.user.id && req.user.role !== 'admin') {
     // since bootcamp.user returns the user id which is a mongoDB ObjectId, we have to convert it to a string
     next(
       new ErrorResponse(
@@ -101,7 +101,7 @@ module.exports.deleteBootcamp = asyncHandler(async (req, res, next) => {
   }
 
   // Make sure user is bootcamp owner
-  if (bootcamp.user.toString() !== req.user._id && req.user.role !== 'admin') {
+  if (bootcamp.user.toString() !== req.user.id && req.user.role !== 'admin') {
     return next(
       new ErrorResponse(
         `User ${req.user._id} is not authorized to delete this bootcamp`
@@ -155,7 +155,7 @@ module.exports.bootcampPhotoUpload = asyncHandler(async (req, res, next) => {
   }
 
   // Make sure user is bootcamp owner
-  if (bootcamp.user.toString() !== req.user._id && req.user.role !== 'admin') {
+  if (bootcamp.user.toString() !== req.user.id && req.user.role !== 'admin') {
     return next(
       new ErrorResponse(
         `User ${req.user._id} is not authorized to upload a bootcamp image`,
