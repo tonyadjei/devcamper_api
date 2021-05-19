@@ -1,3 +1,5 @@
+// IMPORTANT: anytime you make changes to the 'config.env' file, you must restart the server to effect changes
+// IMPORTANT (MongoDB): no matter what roles you assign for your User model, you can always assign an 'admin' role in the mongoDB database(via compass or the web platform) and this user will be able to perform all operations
 const path = require('path');
 const express = require('express');
 const dotenv = require('dotenv');
