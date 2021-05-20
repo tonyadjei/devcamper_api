@@ -104,6 +104,7 @@ const bootcampSchema = mongoose.Schema(
       required: true,
     },
   },
+  // IMPORTANT!!!(COMMENT BELOW THIS LINE)
   // when we add a virtual field to our model, we need to put the code below as a 2nd parameter in our schema function as well.
   {
     toJSON: { virtuals: true },

@@ -53,6 +53,44 @@ exports.login = asyncHandler(async (req, res, next) => {
   sendTokenResponse(user, 200, res);
 });
 
+// @desc    Get current logged in user
+// @route   GET /api/v1/auth/me
+// @access  Private
+
+exports.getMe = asyncHandler(async (req, res, next) => {
+  const user = await User.findById(req.user._id);
+
+  res.status(200).json({
+    success: true,
+    data: user,
+  });
+});
+
+// @desc    Forgot password
+// @route   POST /api/v1/auth/forgotpassword
+// @access  Public
+
+exports.forgotPassword = asyncHandler(async (req, res, next) => {
+  const user = await User.findOne({ email: req.body.email });
+
+  if (!user) {
+    return next(new ErrorResponse('Invalid credentials', 404));
+  }
+
+  // Get reset token
+  const resetToken = user.getResetPasswordToken(); // mind you, the resetPasswordToken and resetPasswordExpire fields of the user model are being set in this user method. But they have only been set locally, and now we must save it to the database
+
+  // we need to save the document again, so that the resetPasswordToken and resetPasswordExpire fields that was set in the method 'getResetPasswordToken()' would be persisted to the database, and wouldn't just be set locally
+  await user.save({ validateBeforeSave: false }); // no need to do validation when saving because we are just adding the resetPasswordToken and resetPasswordExpire, we don't want to waste time doing validation which has already been done initially when the user document was being created
+
+  console.log(resetToken);
+
+  res.status(200).json({
+    success: true,
+    data: user,
+  });
+});
+
 // Get token from model, create cookie and send response
 const sendTokenResponse = (user, statusCode, res) => {
   // Create token
@@ -75,16 +113,3 @@ const sendTokenResponse = (user, statusCode, res) => {
     token,
   });
 };
-
-// @desc    Get current logged in user
-// @route   GET /api/v1/auth/me
-// @access  Private
-
-exports.getMe = asyncHandler(async (req, res, next) => {
-  const user = await User.findById(req.user._id);
-
-  res.status(200).json({
-    success: true,
-    data: user,
-  });
-});
