@@ -69,6 +69,47 @@ exports.getMe = asyncHandler(async (req, res, next) => {
   });
 });
 
+// @desc    Update user details(only name and email)
+// @route   PUT /api/v1/auth/updatedetails
+// @access  Private
+
+exports.updateDetails = asyncHandler(async (req, res, next) => {
+  // this is for updating only the user name and email
+  // we want to make sure that only the name and email is updated, so we won't just pass 'req.body' to User.findByIdAndUpdate(), instead, we will create our own object which has just name and email as properties
+  const fieldsToUpdate = {
+    name: req.body.name,
+    email: req.body.email,
+  };
+
+  const user = await User.findByIdAndUpdate(req.user._id, fieldsToUpdate, {
+    new: true,
+    runValidators: true,
+  });
+
+  res.status(200).json({
+    success: true,
+    data: user,
+  });
+});
+
+// @desc    Update password
+// @route   PUT /api/v1/auth/updatepassword
+// @access  Private
+
+exports.updatePassword = asyncHandler(async (req, res, next) => {
+  const user = await User.findById(req.user._id).select('+password');
+  // Check that the 'current password' field that the user has entered indeed is his current password, prior to coming to update it
+  if (!(await user.matchPassword(req.body.currentPassword))) {
+    // when you are using 'await' in an if statement, put the code that has await in it in parenthesis
+    return next(new ErrorResponse('Password is incorrect'), 401);
+  }
+
+  user.password = req.body.newPassword;
+  await user.save(); // remember, the password is being hashed for us before we save the user (thanks to the 'pre' 'save' mongoose hook in the User model)
+
+  sendTokenResponse(user, 200, res);
+});
+
 // @desc    Forgot password
 // @route   POST /api/v1/auth/forgotpassword
 // @access  Public
@@ -151,6 +192,8 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
 });
 
 // Get token from model, create cookie and send response
+// this helper function will be used to log users in after they
+// 1. Register, 2. Log in and 3. Reset their password
 const sendTokenResponse = (user, statusCode, res) => {
   // Create token
   const token = user.getSignedJwtToken();
