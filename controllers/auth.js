@@ -1,7 +1,9 @@
+const crypto = require('crypto'); // remember, crypto is a core node.js module for token generation and hashing
 const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middleware/async');
 const sendEmail = require('../utils/sendEmail');
 const User = require('../models/User');
+const { nextTick } = require('process');
 
 // @desc    Register user
 // @route   POST /api/v1/auth/register
@@ -87,7 +89,7 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
   // Create reset url
   const resetUrl = `${req.protocol}://${req.get(
     'host'
-  )}/api/v1/resetpassword/${resetToken}`;
+  )}/api/v1/auth/resetpassword/${resetToken}`;
 
   const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please make a PUT request to : \n\n ${resetUrl}`;
 
@@ -116,6 +118,38 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
   }
 });
 
+// @desc    Reset password
+// @route   PUT /api/v1/auth/resetpassword/:resettoken
+// @access  Public
+
+exports.resetPassword = asyncHandler(async (req, res, next) => {
+  // Get hashed token
+  const resetPasswordToken = crypto
+    .createHash('sha256')
+    .update(req.params.resettoken)
+    .digest('hex');
+
+  const user = await User.findOne({
+    resetPasswordToken,
+    resetPasswordExpire: {
+      $gt: Date.now(),
+    },
+  });
+
+  if (!user) {
+    return next(new ErrorResponse('Invalid token'), 400);
+  }
+
+  // Set new password
+  user.password = req.body.password; // remember, we automatically encrypt the password in a mongoose pre 'save' hook in the User model
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpire = undefined;
+  await user.save();
+
+  // Generate token and send in a cookie. This way, the user that just reset his/her password will be logged in
+  sendTokenResponse(user, 200, res);
+});
+
 // Get token from model, create cookie and send response
 const sendTokenResponse = (user, statusCode, res) => {
   // Create token
@@ -123,7 +157,7 @@ const sendTokenResponse = (user, statusCode, res) => {
 
   // options object for the cookie
   const options = {
-    expires: new Date(
+    expires: new Date( // we could have also used 'maxAge' in place of 'expires'
       Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
     ),
     httpOnly: true,
