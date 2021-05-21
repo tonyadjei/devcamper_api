@@ -1,0 +1,13 @@
+IMPORTANT thing to know about the concept of 'resource routers'.
+In order for them to work effeciently, your route paths must follow strictly the REST route naming convention and specification.
+
+An example to explain what I mean.
+
+In the bootcamps route, we have something like this
+
+router.use('/:bootcampId/courses', courseRouter)
+
+What that means is that, when the route '/api/v1/bootcamps/:bootcampId/courses' is visited, it should be handled by the courseRouter.
+Now, in the course router file, the route which handles requests to '/' i.e '/api/v1/courses/' will be fired depending on the method of the request, be it a GET or POST request.
+Why is it that the '/' route in the course router is what will be fired? This is so because the '/:bootcampId/courses' route ends in '/courses' and as such, inside the course router file,
+the route handler for '/'(which is the same as '/courses/) will be fired.
