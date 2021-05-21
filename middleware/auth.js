@@ -26,9 +26,8 @@ exports.protect = asyncHandler(async (req, res, next) => {
   try {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log(decoded);
 
-    req.user = await User.findById(decoded.id);
+    req.user = await User.findById(decoded.id); // here, after we have successfully checked that the user is logged in, we find the user that matches the id that was in the payload, then when we find that user, we put it on the req object so that it will be accessible to the subsequent handler function(s)
 
     next();
   } catch (err) {

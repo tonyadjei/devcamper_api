@@ -8,10 +8,10 @@ const {
 } = require('../controllers/courses');
 
 const Course = require('../models/Courses');
-const advancedResults = require('../middleware/advancedResults');
 
-// Bring in the 'protect route' middleware
+// Bring in the 'protect route', 'authorize' and 'advanced results' middleware
 const { protect, authorize } = require('../middleware/auth');
+const advancedResults = require('../middleware/advancedResults');
 
 const router = express.Router({ mergeParams: true }); // the option here is used when we are merging the URL params(remember in the bootcamps route file, we mounted a particular route(/:bootcampId/courses) on the courses router object. So whenver that route is hit, it should move onto the courses router)
 

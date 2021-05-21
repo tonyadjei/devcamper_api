@@ -1,0 +1,8 @@
+IMPORTANT THING TO NOTE ABOUT CONTROLLER FILES
+
+
+
+1. In order to make your controller files clean, you can put some of the functionality that your controller is supposed to do 
+inside your model instead as either a static function on the model, or a method that will be on the model object. For example,
+before saving a newly created user document, you want to encrypt the password. Instead of performing the encryption in the controller file,
+you can put do this as a 'pre' mongoose hook inside the User model. This helps to make the controller file clean.

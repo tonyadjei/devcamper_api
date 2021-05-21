@@ -3,7 +3,6 @@ const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middleware/async');
 const sendEmail = require('../utils/sendEmail');
 const User = require('../models/User');
-const { nextTick } = require('process');
 
 // @desc    Register user
 // @route   POST /api/v1/auth/register
