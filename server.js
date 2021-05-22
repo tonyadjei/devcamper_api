@@ -11,6 +11,9 @@ const errorHandler = require('./middleware/error');
 const mongoSanitize = require('express-mongo-sanitize');
 const helmet = require('helmet');
 const xss = require('xss-clean');
+const rateLimit = require('express-rate-limit');
+const hpp = require('hpp');
+const cors = require('cors');
 const connectDB = require('./config/db');
 
 // Load env vars
@@ -53,6 +56,21 @@ app.use(helmet());
 
 // Prevent XSS attacks
 app.use(xss());
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 mins
+  max: 100, // max 100 requests
+});
+
+// Limit amount of requests to API to 100 requests per 10 mins
+app.use(limiter);
+
+// Prevent http param pollution
+app.use(hpp());
+
+// Enable CORS (Cross-Origin Resource Sharing), thus, we are making our API accessible from other domains, external domains, thus this becomes a public API
+app.use(cors());
 
 // Mount routers
 app.use('/api/v1/bootcamps', bootcamps);
