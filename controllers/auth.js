@@ -55,6 +55,22 @@ exports.login = asyncHandler(async (req, res, next) => {
   sendTokenResponse(user, 200, res);
 });
 
+// @desc    Log user out / clear cookie
+// @route   GET /api/v1/auth/logout
+// @access  Private
+
+exports.logout = asyncHandler(async (req, res, next) => {
+  res.cookie('token', 'none', {
+    expires: new Date(Date.now() + 1),
+    httpOnly: true,
+  });
+
+  res.status(200).json({
+    success: true,
+    data: 'User logged out successfully',
+  });
+});
+
 // @desc    Get current logged in user
 // @route   GET /api/v1/auth/me
 // @access  Private
@@ -177,7 +193,10 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
   });
 
   if (!user) {
-    return next(new ErrorResponse('Invalid token'), 400);
+    return next(
+      new ErrorResponse('Invalid or Expired token, please try again.'),
+      400
+    );
   }
 
   // Set new password
@@ -194,7 +213,7 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
 // this helper function will be used to log users in after they
 // 1. Register, 2. Log in and 3. Reset their password
 const sendTokenResponse = (user, statusCode, res) => {
-  // Create token
+  // Create token (with payload information, which is the user's id)
   const token = user.getSignedJwtToken();
 
   // options object for the cookie
