@@ -12,7 +12,7 @@ const errorHandler = (err, req, res, next) => {
 
   // Mongoose bad ObjectId error
   if (err.name === 'CastError') {
-    const message = `Resource not found with id of ${err.value}`; // when there is an error due to a wrong ID, the ID that failed to pass the validation is stored in err.value
+    const message = `Resource not found`; // when there is an error due to a wrong ID, the ID that failed to pass the validation is stored in err.value
     error = new ErrorResponse(message, 404);
   }
 
