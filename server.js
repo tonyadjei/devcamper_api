@@ -9,6 +9,8 @@ const fileupload = require('express-fileupload'); // a package for handling file
 const cookieParser = require('cookie-parser');
 const errorHandler = require('./middleware/error');
 const mongoSanitize = require('express-mongo-sanitize');
+const helmet = require('helmet');
+const xss = require('xss-clean');
 const connectDB = require('./config/db');
 
 // Load env vars
@@ -45,6 +47,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Sanitize data against NoSQL injection attacks
 app.use(mongoSanitize());
+
+// Set security headers via the helmet package
+app.use(helmet());
+
+// Prevent XSS attacks
+app.use(xss());
 
 // Mount routers
 app.use('/api/v1/bootcamps', bootcamps);
