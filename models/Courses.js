@@ -46,8 +46,9 @@ const courseSchema = new mongoose.Schema({
 
 // Static method to get avg of course tuitions(for a bootcamp)
 courseSchema.statics.getAverageCost = async function (bootcampId) {
+  let obj;
   try {
-    const obj = await this.aggregate([
+    obj = await this.aggregate([
       // pipeline: series of steps, each step is an object
       {
         $match: { bootcamp: bootcampId }, // match and grab all courses that have the same bootcamp field value

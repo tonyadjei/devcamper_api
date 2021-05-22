@@ -69,3 +69,58 @@ module.exports.addReview = asyncHandler(async (req, res, next) => {
     data: review,
   });
 });
+
+// @desc Update review
+// @route PUT /api/v1/reviews/:id
+// @access Private
+
+module.exports.updateReview = asyncHandler(async (req, res, next) => {
+  let review = await Review.findById(req.params.id);
+
+  if (!review) {
+    return next(
+      new ErrorResponse(`No review with the id of ${req.params.id}`, 404)
+    );
+  }
+
+  // Make sure review belongs to logged in user or that the user is an admin
+  if (review.user.toString() !== req.user.id && req.user.role !== 'admin') {
+    return next(new ErrorResponse(`Not authorized to update review`, 401));
+  }
+
+  review = await Review.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true,
+  });
+
+  res.status(200).json({
+    success: true,
+    data: review,
+  });
+});
+
+// @desc Delete review
+// @route DELETE /api/v1/reviews/:id
+// @access Private
+
+module.exports.deleteReview = asyncHandler(async (req, res, next) => {
+  const review = await Review.findById(req.params.id);
+
+  if (!review) {
+    return next(
+      new ErrorResponse(`No review with the id of ${req.params.id}`, 404)
+    );
+  }
+
+  // Make sure review belongs to logged in user or that the user is an admin
+  if (review.user.toString() !== req.user.id && req.user.role !== 'admin') {
+    return next(new ErrorResponse(`Not authorized to delete review`, 401));
+  }
+
+  await review.remove(); // here, we are using review.remove() and not findByIdAndDelete() because in our review model, we have a 'pre remove' mongoose hook and as such we must have a remove operation and not a delete operation
+
+  res.status(200).json({
+    success: true,
+    data: 'Review deleted successfully',
+  });
+});

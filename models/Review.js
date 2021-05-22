@@ -38,8 +38,9 @@ reviewSchema.index({ bootcamp: 1, user: 1 }, { unique: true });
 
 // Static method to get avg rating
 reviewSchema.statics.getAverageRating = async function (bootcampId) {
+  let obj;
   try {
-    const obj = await this.aggregate([
+    obj = await this.aggregate([
       {
         $match: { bootcamp: bootcampId },
       },
@@ -53,7 +54,6 @@ reviewSchema.statics.getAverageRating = async function (bootcampId) {
   } catch (err) {
     console.error(err);
   }
-
   try {
     await this.model('Bootcamp').findByIdAndUpdate(bootcampId, {
       averageRating: obj[0].averageRating,
